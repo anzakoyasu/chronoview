@@ -1,12 +1,12 @@
 import java.math.BigDecimal;
 
 ReadTemporalData rtd;
+Glyph glyph;
 
 int r_view = 300;
 int maxNodeSize = 0;
 int rangeDisplayNode = 0;
 int clickedTime = -1;
-int glyph_type = '1';
 
 float period = 24;
 
@@ -38,6 +38,7 @@ void setup(){
   rtd.calcNodesPoint();
   rtd.calcMaxNodeSize();
   rtd.calcNodeFeatures();
+  glyph = new Glyph('1');
   
   d_axi = (int)(period/(period*rateAxis));
   rangeDisplayNode = maxNodeSize;
@@ -123,7 +124,7 @@ void keyPressed(){
   }
   
   if(key == '1' || key == '2' || key == '3' || key == '4' || key == '5' || key =='0'){
-    glyph_type = key;
+    glyph.setGlyphType(key);
     
     if(key == '1'){ rateAxis = 1; }
     if(key == '2'){ rateAxis = 0.3; }
