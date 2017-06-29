@@ -1,6 +1,6 @@
 import java.util.Date;
 
-int text_max_size = 12;
+int text_max_size = 32;
 float rateAxis = 0.3;
 float d_axi = 1;
 
@@ -94,8 +94,8 @@ class Node {
     for (int i=0; i < tmpList.size(); i++) {
       int h = getHoursFromDate((Date)tmpList.get(i));
       theta = getTheta(h, period);
-      x += r * cos(theta);
-      y += r * sin(theta);
+      x += r_view * cos(theta);
+      y += r_view * sin(theta);
       count[h]++;
     }
     x /= tmpList.size();
@@ -321,7 +321,7 @@ class Node {
       float dx = nr * cos(getTheta(nextAxis, period));
       float dy = nr * sin(getTheta(nextAxis, period)) * -1;
       float al = 0.68; 
-      al = map(count[nextAxis],0,count[max_t_index],0.2,0.8);
+      al = map(count[nextAxis],0,count[max_t_index],0.4,0.9);
       fill(gcl_h[nextAxis], 255 * al);
 
       float ar = sqrt(count[nextAxis] / PI);
@@ -393,7 +393,7 @@ class Node {
   float getDiameter() {
     float ar = 2 * sqrt(tmpList.size() / PI);
     float mr = sqrt(maxNodeSize / PI);
-    ar *= (0.15 * r)/mr;
+    ar *= (0.15 * r_view)/mr;
 
     return 10 + ar;
   }

@@ -2,17 +2,16 @@ import java.math.BigDecimal;
 
 ReadTemporalData rtd;
 
+int r_view = 300;
+int maxNodeSize = 0;
+int rangeDisplayNode = 0;
+int clickedTime = -1;
 int glyph_type = '1';
 
-int r = 300;
 float period = 24;
-int clickedTime = -1;
 
-int maxNodeSize = 0;
 boolean display_label = true;
 boolean display_g_frq = false;
-
-int rangeDisplayNode = 0;
 
 /*
 color[] gcl_h = 
@@ -29,6 +28,8 @@ color[] gcl_h =
 color[] gcl_hq =
 {#253532,#2c433e,#33524b,#3a6158,#427066,#498074,#509082,#57a090,#5fb19f,#66c2ae};
 
+boolean PLOT_MDS = false;
+
 void setup(){
   size(1200, 700);
   smooth();
@@ -36,7 +37,7 @@ void setup(){
   rtd = new ReadTemporalData("chicago_crime_10000.csv");
   rtd.calcNodesPoint();
   rtd.calcMaxNodeSize();
-  rtd.test();
+  rtd.calcNodeFeatures();
   
   d_axi = (int)(period/(period*rateAxis));
   rangeDisplayNode = maxNodeSize;
@@ -44,24 +45,36 @@ void setup(){
 
 void draw(){
   background(0);
-  textSize(12);
-  
-  stroke(255);
-  noFill();
-  ellipse(350, 350, r * 2, r * 2);
-  
-  translate(350,350);
-  
-  textAlign(CENTER);
-  fill(255);
-  
-  rtd.calcMaxNodeSize();
   
   clickedTime = -1;
+
+  translate(350,350);
+  if(!PLOT_MDS) drawChronoViewWindow();
+  
+  rtd.calcMaxNodeSize();
+  rtd.drawNodes();
+
+  translate(400,240);
+  drawOperationArea();
+  
+}  
+
+float getTheta(float t, float period){
+  return PI/2 - 2*PI*(t/period);
+}
+
+void drawChronoViewWindow(){
+  textSize(12);
+  textAlign(CENTER);
+ 
+  stroke(255);
+  noFill();
+  ellipse(0, 0, r_view * 2, r_view * 2);
+  
   for(int h = 0; h < period; h++){
     float theta = getTheta(h, period);
-    float x = (r + 20) * cos(theta); 
-    float y = (r + 20) * sin(theta);
+    float x = (r_view + 20) * cos(theta); 
+    float y = (r_view + 20) * sin(theta);
     fill(gcl_h[h]);
     text(h, x, y * -1);
     
@@ -69,13 +82,13 @@ void draw(){
       clickedTime = h;
     }
   }
-  fill(255);
-  rtd.drawNodes();
-  
-  translate(400,240);
-  
+}
+
+void drawOperationArea(){
   stroke(255);
-  textSize(12);fill(255);
+  textSize(12);
+  fill(255);
+  
   text("rate of number of axes", 150, -20);
   line(0,0,300,0);
   text("range of display Nodes", 150, 60);
@@ -90,18 +103,13 @@ void draw(){
     if(rateAxis > 1.0) rateAxis = 1.0;
     if(rateAxis < 0.05) rateAxis = 0.1;
     
-    println(rateAxis);
     d_axi = period/(period*rateAxis);
     rtd.calcNodesPoint();
   }
   
   if(mouseX > 750 && mouseY > 630 && mouseX <= 1080 && mouseY < 720){
-    rangeDisplayNode = (int)map((mouseX - 750)/300.0, 0, 1, 0, maxNodeSize);
+    rangeDisplayNode = (int)map((mouseX - 750)/300.0, 0, 1.0, 0, maxNodeSize);
   }
-}
-
-float getTheta(float t, float period){
-  return PI/2 - 2*PI*(t/period);
 }
 
 void keyPressed(){
