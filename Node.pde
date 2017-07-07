@@ -1,8 +1,8 @@
 import java.util.Date;
 
 int text_max_size = 32;
-float rateAxis = 0.3;
-float d_axi = 1;
+float rateAxis = 1.0;
+int axi_step = 1; //何本単位で集約するのか 24周期なら1,2,3,4,6,8,12
 
 class Node {
   private String label;
@@ -13,6 +13,7 @@ class Node {
 
   float[] averageByHour;
   float[] varianceByHour;
+  float[] pday;
 
   private float x, y;
 
@@ -20,6 +21,7 @@ class Node {
     label = str;
     averageByHour  = new float[(int)period];
     varianceByHour = new float[(int)period];
+    pday = new float[(int)period];
     tmpList = new ArrayList<Date>();
   }
 
@@ -78,7 +80,7 @@ class Node {
 
   void drawBackEllipse() {
     noStroke();
-    fill(128, 128, 128, 50);
+    fill(128, 128, 148, 68);
     ellipse(x, y*-1, getDiameter(), getDiameter());
   }
 
@@ -100,21 +102,8 @@ class Node {
     }
     x /= tmpList.size();
     y /= tmpList.size();
-  }
-
-  void drawNode() {
-    noStroke();
-    pushMatrix();
-    translate(x, y * -1);
-
-    if (clickedTime == -1 || clickedTime == max_t_index) {      
-      glyph.draw(tmpList, count);
-
-      if (display_g_frq) drawTimeLinePlot(getDiameter()/2);
-    } else {
-      fill(150, 200, 220, 50);
-    }
-    popMatrix();
+    
+    max_t_index = getMaxIndex(count);
   }
 
   void drawNodeLabel() {
@@ -124,12 +113,11 @@ class Node {
     } else {
       fill(50);
     }
-    text(label, x, y * -1 - getDiameter()/4);
+    text(label, x, y * -1 - getDiameter()/2);
   }
 
   void drawTimeLinePlot(float diam) {
     ArrayList t_list_h = getTmpListByHours();
-
     for (int i = 0; i < t_list_h.size(); i++) {
       ArrayList<Date> list = (ArrayList)t_list_h.get(i); 
       Date d = list.get(0);
@@ -143,8 +131,8 @@ class Node {
         continue;
       }
 
-      long fh = rtd.firstDate.getTime();
-      long lh = rtd.lastDate.getTime();
+      long fh = firstDate.getTime();
+      long lh = lastDate.getTime();
 
       if (d.getTime() > lh) continue;
 
@@ -204,36 +192,51 @@ class Node {
     popMatrix();
   }
 
-  void calcAverageByHour(ArrayList list_h) {
+  float[] calcAverageByHour(ArrayList list_h) {
     int[] num = new int[(int)period];
+    float[] average = new float[(int)period];
 
     for (int i=0; i < list_h.size(); i++) {
       ArrayList<Date> t_list = (ArrayList)list_h.get(i);
       int c = t_list.size();
       int h = t_list.get(0).getHours();
-      averageByHour[h] += c;
+      average[h] += c;
       num[h]++;
     }
 
     for (int i=0; i < period; i++) {
-      averageByHour[i] /= num[i];
+      average[i] /= num[i];
     }
+    return average;
   }
 
-  void calcVarianceByHour(ArrayList list_h) {
+  float[] calcVarianceByHour(ArrayList list_h) {
     int[] num = new int[(int)period];
+    float[] variance = new float[(int)period];
 
     for (int i=0; i < list_h.size(); i++) {
       ArrayList<Date> t_list = (ArrayList)list_h.get(i);
       int c = t_list.size();
       int h = t_list.get(0).getHours();
-      varianceByHour[h] += sq(c - averageByHour[h]);
+      variance[h] += sq(c - averageByHour[h]);
       num[h]++;
+      
+      int d = 1;
+      if(c == 0) continue;
+      Date sday= t_list.get(0);
+      for(int j=1; j < t_list.size(); j++){
+        if(sday.getDate() != t_list.get(j).getDate()){
+          d++;
+          sday = t_list.get(j);
+        }
+      }
+      pday[h] = (float)d / (float)c;
     }
-
     for (int i=0; i < period; i++) {
-      varianceByHour[i] /= num[i];
+      variance[i] /= num[i];
     }
+    
+    return variance;
   }
 
 
@@ -248,6 +251,17 @@ class Node {
 
   int getHoursFromDate(Date d) {
     return (int)(d.getHours() % period);
+  }
+  
+  int getMaxIndex(int[] array) {
+    int v=0, vt=0;
+    for (int i=0; i<array.length; i++) {
+      if (array[i] > v) {
+        v = array[i];
+        vt = i;
+      }
+    }
+    return vt;
   }
 
 

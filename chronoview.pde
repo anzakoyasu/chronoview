@@ -1,6 +1,6 @@
 import java.math.BigDecimal;
 
-ReadTemporalData rtd;
+ChronoMain chrono;
 Glyph glyph;
 
 int r_view = 300;
@@ -13,12 +13,8 @@ float period = 24;
 boolean display_label = true;
 boolean display_g_frq = false;
 
-/*
-color[] gcl_h = 
-{#ee0026,#fe4418,#ff6c0c,#fe8d00,#fca900,#fcc600,#fce501,#d2dc0c
- ,#a3d114,#78be2b,#4eac38,#309c4a,#259260,#0b8874,#0c787d,#0c6784
- ,#105488,#184389,#16308a,#201988,#4e057f,#6f0074,#8c006c,#ac0066};
-*/
+Date firstDate;
+Date lastDate;
 
 color[] gcl_h = 
 {#f9344c,#fb4938,#fd662d,#ff8124,#ff9b15,#ffb61d,#ffd126,#ffed2f
@@ -28,19 +24,20 @@ color[] gcl_h =
 color[] gcl_hq =
 {#253532,#2c433e,#33524b,#3a6158,#427066,#498074,#509082,#57a090,#5fb19f,#66c2ae};
 
-boolean PLOT_MDS = false;
+boolean PLOT_MDS = true;
 
 void setup(){
-  size(1200, 700);
+  size(1200, 699);
   smooth();
   
-  rtd = new ReadTemporalData("chicago_crime_10000.csv");
-  rtd.calcNodesPoint();
-  rtd.calcMaxNodeSize();
-  rtd.calcNodeFeatures();
+  firstDate = new Date();
+  lastDate = new Date();
+  chrono = new ChronoMain("shop316.csv");
+  chrono.initialize();
+  
   glyph = new Glyph('1');
   
-  d_axi = (int)(period/(period*rateAxis));
+  axi_step = 1;
   rangeDisplayNode = maxNodeSize;
 }
 
@@ -52,10 +49,11 @@ void draw(){
   translate(350,350);
   if(!PLOT_MDS) drawChronoViewWindow();
   
-  rtd.calcMaxNodeSize();
-  rtd.drawNodes();
+  chrono.calcMaxNodeSize();
+  chrono.drawNodes();
 
   translate(400,240);
+  //translate(400,600);
   drawOperationArea();
   
 }  
@@ -98,14 +96,19 @@ void drawOperationArea(){
   if(mouseX > 750 && mouseY > 550 && mouseX <= 1080 && mouseY < 620){
     rateAxis = (mouseX - 750)/300.0;
     
-    BigDecimal bd = new BigDecimal(rateAxis);
+    if(rateAxis > 1.0) rateAxis = 1.0;
+    if(rateAxis < 0.05) rateAxis = 0.05;
+    
+    axi_step = (int)map(rateAxis,0.05,1.0,1,period/2);
+    while(period % axi_step != 0){
+      axi_step--;
+    }
+    
+    /*BigDecimal bd = new BigDecimal(rateAxis);
     bd = bd.setScale(1,BigDecimal.ROUND_DOWN);
     rateAxis = bd.floatValue();
-    if(rateAxis > 1.0) rateAxis = 1.0;
-    if(rateAxis < 0.05) rateAxis = 0.1;
-    
-    d_axi = period/(period*rateAxis);
-    rtd.calcNodesPoint();
+    d_axi = period/(period*rateAxis);*/
+    chrono.calcNodesPoint();
   }
   
   if(mouseX > 750 && mouseY > 630 && mouseX <= 1080 && mouseY < 720){
@@ -129,7 +132,11 @@ void keyPressed(){
     if(key == '1'){ rateAxis = 1; }
     if(key == '2'){ rateAxis = 0.3; }
     
-    d_axi = (int)(period/(period*rateAxis));
-    rtd.calcNodesPoint();
+    axi_step = (int)map(rateAxis,0.05,1.0,1,period/2);
+    while(period % axi_step != 0){
+      axi_step--;
+    }
+    
+    chrono.calcNodesPoint();
   }   
 }
